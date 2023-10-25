@@ -1,60 +1,161 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 
 import './App.css';
 import Canvas from './Components/Canvas';
+import OperationSelection from './Components/OperationSelection';
+import { performOperation, extractNumberFromCanvas } from './Components/OperationUtils';
+
 
 
 function App() {
   const [text, setText] = useState("");
   const [text2, setText2] = useState("");
+  const [selectedOperation, setSelectedOperation] = useState("+");
+  const [results, setResults] = useState([]);
+
+  const handleOperationSelect = (operation) => {
+    setSelectedOperation(operation);
+  };
+
+
+
 
   const handleClick = async () => {
-    const canvas = document.getElementById('Canvas1');
+    const canvas1 = document.getElementById('Canvas1');
     const canvas2 = document.getElementById('Canvas2');
-    if (canvas) {
-      const imgData = canvas.toDataURL();
-      Tesseract.recognize(
-        imgData,'eng',
-        { 
-          logger: m => console.log(m) 
-        }
-      )
-      .catch (err => {
-        console.error(err);
-      })
-      .then(result => {
-        // Get Confidence score
-        console.log('aaaaaaaaaaa')
-        console.log(result)
-        console.log(result.data.text)
-        let confidence = result.data.confidence;
-        let text = result.data.text;
-        setText(text);
-      });
+
+    try {
+      const number1 = await extractNumberFromCanvas(canvas1, setText);
+      const number2 = await extractNumberFromCanvas(canvas2, setText2);
+      console.log('bbbbb', number1, number2, selectedOperation)
+      if (selectedOperation && !isNaN(number1) && !isNaN(number2)) {
+        const result = await performOperation(number1, number2, selectedOperation);
+        console.log(`Result of ${number1} ${selectedOperation} ${number2} is: ${result}`);
+        const historyItem = `${number1} ${selectedOperation} ${number2} = ${result}`;
+        setResults([historyItem, ...results]);
+      } else {
+        console.log('Invalid input or operation');
+      }
+    } catch (error) {
+      console.error(error);
     }
-    if (canvas2) {
-      const imgData = canvas2.toDataURL();
-      console.log(imgData)
-      Tesseract.recognize(
-        imgData,'eng',
-        { 
-          logger: m => console.log(m) 
-        }
-      )
-      .catch (err => {
-        console.error(err);
-      })
-      .then(result => {
-        // Get Confidence score
-        console.log('aaaaaaaaaaa')
-        console.log(result)
-        console.log(result.data.text)
-        let confidence = result.data.confidence;
-        let text = result.data.text;
-        setText2(text);
-      });
-    }
+  };
+
+
+  return (
+    <div className="App">
+    <h1 className="title">Draw two numbers and press Calculate to get the answer</h1>
+    <main className="App-main">
+      <div className="canvas-container">
+        <div className="canvas">
+          <Canvas id={"Canvas1"} width={200} height={100}  />
+          <div className="text-box" style={{ minHeight: "40px" }}>
+            <p>{text}</p>
+          </div>
+        </div>
+        <div className="operation-selection-container">
+          <OperationSelection handleOperationSelect={handleOperationSelect} />
+        </div>
+        <div className="canvas">
+          <Canvas id={"Canvas2"} width={200} height={100}  />
+          <div className="text-box" style={{ minHeight: "40px" }}>
+            <p>{text2}</p>
+          </div>
+        </div>
+      </div>
+      <button onClick={handleClick} className="calculate-button" style={{ height: 50 }}>
+        Calculate
+      </button>
+      <h3 style={{ marginTop: '40px' }}>Calculation History:</h3>
+      <div className="results">
+        
+        {results.map((result, index) => (
+          <p key={index}>{result}</p>
+        ))}
+      </div>
+    </main>
+  </div>
+);
+}
+
+
+
+export default App;
+
+  // const handleClick = async () => {
+  //   const canvas = document.getElementById('Canvas1');
+  //   const canvas2 = document.getElementById('Canvas2');
+
+  //   let number1, number2, result;
+
+  //   if (canvas) {
+  //     const imgData = canvas.toDataURL();
+  //     Tesseract.recognize(
+  //       imgData,'eng',
+  //       { 
+  //         logger: m => console.log(m) 
+  //       }
+  //     )
+  //     .catch (err => {
+  //       console.error(err);
+  //     })
+  //     .then(result => {
+  //       // Get Confidence score
+  //       // console.log('aaaaaaaaaaa')
+  //       // console.log(result)
+  //       // console.log(result.data.text)
+  //       // let confidence = result.data.confidence;
+  //       let text = result.data.text;
+  //       number1 = parseFloat(text);
+  //       setText(text);
+  //     });
+  //   }
+  //   if (canvas2) {
+  //     const imgData = canvas2.toDataURL();
+  //     console.log(imgData)
+  //     Tesseract.recognize(
+  //       imgData,'eng',
+  //       { 
+  //         logger: m => console.log(m) 
+  //       }
+  //     )
+  //     .catch (err => {
+  //       console.error(err);
+  //     })
+  //     .then(result => {
+  //       // Get Confidence score
+  //       // console.log('aaaaaaaaaaa')
+  //       // console.log(result)
+  //       // console.log(result.data.text)
+  //       // let confidence = result.data.confidence;
+  //       let text = result.data.text;
+  //       number2 = parseFloat(text);
+  //       setText2(text);
+  //     });
+  //   }
+  //   console.log('a', number1, number2 , selectedOperation)
+  //   if (number1 && number2 && selectedOperation) {
+  //     switch (selectedOperation) {
+  //       case '+':
+  //         result = number1 + number2;
+  //         break;
+  //       case '-':
+  //         result = number1 - number2;
+  //         break;
+  //       case '*':
+  //         result = number1 * number2;
+  //         break;
+  //       case '/':
+  //         result = number1 / number2;
+  //         break;
+  //       default:
+  //         result = 'Invalid Operation';
+  //     }
+  //   }
+  
+  //     console.log(`Result of ${number1} ${selectedOperation} ${number2} is: ${result}`);
+  
 
     // if (canvas) {
     //   const imgData = canvas.toDataURL();
@@ -82,37 +183,8 @@ function App() {
     //     console.error(error);
     //   }
     // }
-  }
+  // }
 
-  return (
-    <div className="App">
-  <main className="App-main">
-    <div className="canvas-container">
-      <div>
-        <h3>Draw a number on the canvas</h3>
-        <Canvas id={"Canvas1"} width={200} height={100} />
-        <h3>Extracted text</h3>
-        <div className="text-box">
-          <p>{text}</p>
-        </div>
-      </div>
-      <div>
-        <h3>Draw another number on the canvas</h3>
-        <Canvas id={"Canvas2"} width={200} height={100} />
-        <h3>Extracted text</h3>
-        <div className="text-box">
-          <p>{text2}</p>
-        </div>
-      </div>
-    </div>
-    <button onClick={handleClick} style={{ height: 50 }}>Convert to text</button>
-  </main>
-</div>
-
-  );
-}
-
-export default App;
 
 
 
