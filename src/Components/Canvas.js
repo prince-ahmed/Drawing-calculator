@@ -2,7 +2,8 @@ import {useOnDraw} from './Hooks';
 
 const Canvas = ({
     width,
-    height
+    height,
+    id
 }) => {
 
     const {
@@ -35,12 +36,20 @@ const Canvas = ({
         ctx.fill();
 
     }
+    const handleCanvasDoubleClick = () => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+    
 
     return(
         <canvas
+            id={id}
             width={width}
             height={height}
             onMouseDown={onCanvasMouseDown}
+            onDoubleClick={handleCanvasDoubleClick}
             style={canvasStyle}
             ref={setCanvasRef}
         />
